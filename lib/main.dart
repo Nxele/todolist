@@ -9,7 +9,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'My Todo List',
-      theme: ThemeData(  // This is the theme of your application.
+      theme: ThemeData(
+        // This is the theme of your application.
         primarySwatch: Colors.lime, //appbar color
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
@@ -31,18 +32,42 @@ class TodoListState extends State<TodoList> {
   List<String> _todoItems = [];
 
   //this will be called everytime the add button is called
-  void _addToDoItem(){
+  void _addToDoItem() {
     //setSate tells our app to re-render our list
     setState(() {
-
+      int index = _todoItems.length;
+      _todoItems.add('Item ' + index.toString());
     });
   }
+
+  //Build the whole list of todp items
+  Widget _buildToDoList() {
+    return new ListView.builder(
+      itemBuilder: (Context, index) {
+        // ignore: missing_return
+        if (index < _todoItems.length) {
+          return _buildToDoItem(_todoItems[index]);
+        }
+      },
+    );
+  }
+
+  //Build a single todo item
+  Widget _buildToDoItem(String todoText) {
+    return new ListTile(title: new Text(todoText));
+  }
+
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
+      ),
+      body: _buildToDoList(),
+      floatingActionButton: new FloatingActionButton(
+          onPressed: _addToDoItem,
+          tooltip: 'Add task',
+          child: Icon(Icons.add),
       ),
     );
   }
