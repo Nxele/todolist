@@ -1,74 +1,135 @@
+// Import MaterialApp and other widgets which we can use to quickly create a material app
 import 'package:flutter/material.dart';
 
-void main() => runApp(MyApp());
+// Code written in Dart starts exectuting from the main function. runApp is part of
+// Flutter, and requires the component which will be our app's container. In Flutter,
+// every component is known as a "widget".
+void main() => runApp(new TodoApp());
 
-class MyApp extends StatelessWidget {
-  // This widget is the root of your application.
+// Every component in Flutter is a widget, even the whole app itself
+class TodoApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'My Todo List',
-      theme: ThemeData(
-        // This is the theme of your application.
-        primarySwatch: Colors.lime, //appbar color
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-      ),
-      home: TodoList(title: 'My To-Do List'),
+    return new MaterialApp(
+        theme: ThemeData(
+          primarySwatch: Colors.lightGreen
+        ),
+        debugShowCheckedModeBanner: false,
+        title: 'Todo List',
+        home: new TodoList()
     );
   }
 }
 
 class TodoList extends StatefulWidget {
-  TodoList({Key key, this.title}) : super(key: key);
-
-  final String title;
-
   @override
-  TodoListState createState() => TodoListState();
+  createState() => new TodoListState();
 }
 
 class TodoListState extends State<TodoList> {
   List<String> _todoItems = [];
 
-  //this will be called everytime the add button is called
-  void _addToDoItem() {
-    //setSate tells our app to re-render our list
-    setState(() {
-      int index = _todoItems.length;
-      _todoItems.add('Item ' + index.toString());
-    });
+  void _addTodoItem(String task) {
+    // Only add the task if the user actually entered something
+    if(task.length > 0) {
+      // Putting our code inside "setState" tells the app that our state has changed, and
+      // it will automatically re-render the list
+      setState(() => _todoItems.add(task));
+    }
   }
 
-  //Build the whole list of todp items
-  Widget _buildToDoList() {
+  void _removeTodoItem(int index) {
+    setState(() => _todoItems.removeAt(index));
+  }
+
+  void _promptRemoveTodoItem(int index) {
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return new AlertDialog(
+              title: new Text('Mark "${_todoItems[index]}" as done?'),
+              actions: <Widget>[
+                new FlatButton(
+                    child: new Text('CANCEL'),
+                    // The alert is actually part of the navigation stack, so to close it, we
+                    // need to pop it.
+                    onPressed: () => Navigator.of(context).pop()
+                ),
+                new FlatButton(
+                    child: new Text('MARK AS DONE'),
+                    onPressed: () {
+                      _removeTodoItem(index);
+                      Navigator.of(context).pop();
+                    }
+                )
+              ]
+          );
+        }
+    );
+  }
+
+  // Build the whole list of todo items
+  Widget _buildTodoList() {
     return new ListView.builder(
-      itemBuilder: (Context, index) {
-        // ignore: missing_return
-        if (index < _todoItems.length) {
-          return _buildToDoItem(_todoItems[index]);
+      itemBuilder: (context, index) {
+        // itemBuilder will be automatically be called as many times as it takes for the
+        // list to fill up its available space, which is most likely more than the
+        // number of todo items we have. So, we need to check the index is OK.
+        if(index < _todoItems.length) {
+          return _buildTodoItem(_todoItems[index], index);
         }
       },
     );
   }
 
-  //Build a single todo item
-  Widget _buildToDoItem(String todoText) {
-    return new ListTile(title: new Text(todoText));
+  // Build a single todo item
+  Widget _buildTodoItem(String todoText, int index) {
+    return new ListTile(
+        title: new Text(todoText),
+        onTap: () => _promptRemoveTodoItem(index)
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
+    return new Scaffold(
+      appBar: new AppBar(
+          title: new Text('Todo List')
       ),
-      body: _buildToDoList(),
+      body: _buildTodoList(),
       floatingActionButton: new FloatingActionButton(
-          onPressed: _addToDoItem,
+          onPressed: _pushAddTodoScreen,
           tooltip: 'Add task',
-          child: Icon(Icons.add),
+          child: new Icon(Icons.add)
       ),
+    );
+  }
+
+  void _pushAddTodoScreen() {
+    // Push this page onto the stack
+    Navigator.of(context).push(
+      // MaterialPageRoute will automatically animate the screen entry, as well as adding
+      // a back button to close it
+        new MaterialPageRoute(
+            builder: (context) {
+              return new Scaffold(
+                  appBar: new AppBar(
+                      title: new Text('Add a new task')
+                  ),
+                  body: new TextField(
+                    autofocus: true,
+                    onSubmitted: (val) {
+                      _addTodoItem(val);
+                      Navigator.pop(context); // Close the add todo screen
+                    },
+                    decoration: new InputDecoration(
+                        hintText: 'Enter something to do...',
+                        contentPadding: const EdgeInsets.all(16.0)
+                    ),
+                  )
+              );
+            }
+        )
     );
   }
 }
